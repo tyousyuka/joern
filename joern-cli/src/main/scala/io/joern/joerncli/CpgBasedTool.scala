@@ -11,10 +11,10 @@ import io.shiftleft.semanticcpg.language._
 object CpgBasedTool {
 
   /** Load code property graph from overflowDB
-    *
-    * @param filename
-    *   name of the file that stores the CPG
-    */
+   *
+   * @param filename
+   *   name of the file that stores the CPG
+   */
   def loadFromOdb(filename: String): Cpg = {
     val odbConfig = overflowdb.Config.withDefaults().withStorageLocation(filename)
     val config    = CpgLoaderConfig().withOverflowConfig(odbConfig).doNotCreateIndexesOnLoad
@@ -22,7 +22,7 @@ object CpgBasedTool {
   }
 
   /** Add the data flow layer to the CPG if it does not exist yet.
-    */
+   */
   def addDataFlowOverlayIfNonExistent(cpg: Cpg)(implicit s: Semantics): Unit = {
     if (!cpg.metaData.overlays.exists(_ == OssDataFlow.overlayName)) {
       System.err.println("CPG does not have dataflow overlay. Calculating.")
@@ -33,7 +33,7 @@ object CpgBasedTool {
   }
 
   /** Create an informational string for the user that informs of a successfully generated CPG.
-    */
+   */
   def newCpgCreatedString(path: String): String = {
     val absolutePath = File(path).path.toAbsolutePath
     s"Successfully wrote graph to: $absolutePath\n" +
@@ -43,7 +43,7 @@ object CpgBasedTool {
   val ARGS_DELIMITER = "--frontend-args"
 
   /** Splits arguments at the ARGS_DELIMITER into arguments for the tool and arguments for the language frontend.
-    */
+   */
   def splitArgs(args: Array[String]): (List[String], List[String]) = {
     args.indexOf(ARGS_DELIMITER) match {
       case -1 => (args.toList, Nil)
@@ -54,8 +54,8 @@ object CpgBasedTool {
   }
 
   def exitIfInvalid(outDir: String, cpgFileName: String): Unit = {
-    if (File(outDir).exists)
-      exitWithError(s"Output directory `$outDir` already exists.")
+    //    if (File(outDir).exists)
+    //      exitWithError(s"Output directory `$outDir` already exists.")
     if (File(cpgFileName).notExists)
       exitWithError(s"CPG at $cpgFileName does not exist.")
   }

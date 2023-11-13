@@ -1,15 +1,14 @@
 package io.joern.joerncli
 
-import better.files.Dsl._
-import better.files.File
+import better.files.Dsl.*
 import io.joern.dataflowengineoss.DefaultSemantics
-import io.joern.dataflowengineoss.layers.dataflows._
+import io.joern.dataflowengineoss.layers.dataflows.*
 import io.joern.dataflowengineoss.semanticsloader.Semantics
 import io.joern.joerncli.CpgBasedTool.exitIfInvalid
-import io.joern.x2cpg.layers._
+import io.joern.x2cpg.layers.*
 import io.shiftleft.codepropertygraph.Cpg
 import io.shiftleft.semanticcpg.language.{toAstNodeMethods, toNodeTypeStarters}
-import io.shiftleft.semanticcpg.layers._
+import io.shiftleft.semanticcpg.layers.*
 import overflowdb.formats.ExportResult
 import overflowdb.formats.dot.DotExporter
 import overflowdb.formats.graphml.GraphMLExporter
@@ -25,14 +24,14 @@ import scala.util.Using
 object JoernExport {
 
   case class Config(
-    cpgFileName: String = "cpg.bin",
-    outDir: String = "out",
-    repr: Representation.Value = Representation.Cpg14,
-    format: Format.Value = Format.Dot
-  )
+                     cpgFileName: String = "cpg.bin",
+                     outDir: String = "out",
+                     repr: Representation.Value = Representation.Cpg14,
+                     format: Format.Value = Format.Dot
+                   )
 
   /** Choose from either a subset of the graph, or the entire graph (all).
-    */
+   */
   object Representation extends Enumeration {
     val Ast, Cfg, Ddg, Cdg, Pdg, Cpg14, Cpg, All = Value
 
@@ -46,7 +45,7 @@ object JoernExport {
 
   }
   object Format extends Enumeration {
-    val Dot, Neo4jCsv, Graphml, Graphson = Value
+    val Dot, Neo4jCsv, Neo4jEmbedded, Graphml, Graphson = Value
 
     lazy val byNameLowercase: Map[String, Value] =
       values.map { value =>
@@ -61,7 +60,7 @@ object JoernExport {
     parseConfig(args).foreach { config =>
       val outDir = config.outDir
       exitIfInvalid(outDir, config.cpgFileName)
-      mkdir(File(outDir))
+      //      mkdir(File(outDir))
 
       Using.resource(CpgBasedTool.loadFromOdb(config.cpgFileName)) { cpg =>
         exportCpg(cpg, config.repr, config.format, Paths.get(outDir).toAbsolutePath)
@@ -109,6 +108,8 @@ object JoernExport {
         exportDot(representation, outDir, context)
       case Format.Neo4jCsv =>
         exportWithOdbFormat(cpg, representation, outDir, Neo4jCsvExporter)
+      case Format.Neo4jEmbedded =>
+        exportWithOdbFormat(cpg, representation, outDir, Neo4jEmbeddedExporter)
       case Format.Graphml =>
         exportWithOdbFormat(cpg, representation, outDir, GraphMLExporter)
       case Format.Graphson =>
@@ -120,7 +121,7 @@ object JoernExport {
 
   private def exportDot(repr: Representation.Value, outDir: Path, context: LayerCreatorContext): Unit = {
     val outDirStr = outDir.toString
-    import Representation._
+    import Representation.*
     repr match {
       case Ast   => new DumpAst(AstDumpOptions(outDirStr)).create(context)
       case Cfg   => new DumpCfg(CfgDumpOptions(outDirStr)).create(context)
@@ -133,11 +134,11 @@ object JoernExport {
   }
 
   private def exportWithOdbFormat(
-    cpg: Cpg,
-    repr: Representation.Value,
-    outDir: Path,
-    exporter: overflowdb.formats.Exporter
-  ): Unit = {
+                                   cpg: Cpg,
+                                   repr: Representation.Value,
+                                   outDir: Path,
+                                   exporter: overflowdb.formats.Exporter
+                                 ): Unit = {
     val ExportResult(nodeCount, edgeCount, _, additionalInfo) = repr match {
       case Representation.All =>
         exporter.runExport(cpg.graph, outDir)
@@ -164,8 +165,8 @@ object JoernExport {
   }
 
   /** for each method in the cpg: recursively traverse all AST edges to get the subgraph of nodes within this method add
-    * the method and this subgraph to the export add all edges between all of these nodes to the export
-    */
+   * the method and this subgraph to the export add all edges between all of these nodes to the export
+   */
   private def splitByMethod(cpg: Cpg): IterableOnce[MethodSubGraph] = {
     cpg.method.map { method =>
       MethodSubGraph(methodName = method.name, methodFilename = method.filename, nodes = method.ast.toSet)
@@ -173,14 +174,14 @@ object JoernExport {
   }
 
   /** @param windowsFilenameDeduplicationHelper
-    *   utility map to ensure we don't override output files for identical method names
-    */
+   *   utility map to ensure we don't override output files for identical method names
+   */
   private def sanitizedFileName(
-    methodName: String,
-    methodFilename: String,
-    fileExtension: String,
-    windowsFilenameDeduplicationHelper: mutable.Set[String]
-  ): String = {
+                                 methodName: String,
+                                 methodFilename: String,
+                                 fileExtension: String,
+                                 windowsFilenameDeduplicationHelper: mutable.Set[String]
+                               ): String = {
     val sanitizedMethodName = methodName.replaceAll("[^a-zA-Z0-9-_\\.]", "_")
     val sanitizedFilename =
       if (scala.util.Properties.isWin) {

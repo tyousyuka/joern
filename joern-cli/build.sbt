@@ -7,6 +7,7 @@ libraryDependencies ++= Seq(
   "com.lihaoyi"      %% "requests"          % Versions.requests,
   "com.github.scopt" %% "scopt"             % "4.1.0",
   "org.reflections"   % "reflections"       % "0.10.2",
+  "org.neo4j"         % "neo4j"             % "5.11.0",
   "org.scalatest"    %% "scalatest"         % Versions.scalatest % Test
 )
 
